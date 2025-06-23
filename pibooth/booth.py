@@ -307,6 +307,9 @@ class PiApplication(object):
         for event in events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
                 return event
+            if event.type == pygame.KEYDOWN and ( event.key==1073741903):
+                # allow remote clicker / presenter to trigger capture
+                return event
             if (event.type == pygame.MOUSEBUTTONUP and event.button in (1, 2, 3)) or event.type == pygame.FINGERUP:
                 pos = get_event_pos(self._window.display_size, event)
                 rect = self._window.get_rect()
