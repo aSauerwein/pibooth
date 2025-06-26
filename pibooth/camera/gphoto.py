@@ -58,8 +58,20 @@ def get_gp_camera_proxy(port=None):
 def gp_log_callback(level, domain, string, data=None):
     """Logging callback for gphoto2.
     """
-    LOGGER.getChild('gphoto2').debug(domain.decode("utf-8") + u': ' + string.decode("utf-8"))
+    LOGGER.getChild('gphoto2').debug(domain + u': ' + string)
 
+def empty_event_queue(camera):
+    """ use this to clear the event queue
+    before adding this function the capture always failed after the first image
+    see: https://github.com/jim-easterbrook/python-gphoto2/issues/65
+    """
+    while True:
+        type_, data = camera.wait_for_event(10)
+        if type_ == gp.GP_EVENT_TIMEOUT:
+            return
+        if type_ == gp.GP_EVENT_FILE_ADDED:
+            # get a second image if camera is set to raw + jpeg
+            print('Unexpected new file', data.folder + data.name)
 
 class GpCamera(BaseCamera):
 
@@ -296,6 +308,10 @@ class GpCamera(BaseCamera):
             self.set_config_value('imgsettings', 'iso', self.capture_iso)
 
         self._captures.append((self._cam.capture(gp.GP_CAPTURE_IMAGE), effect))
+        # clear event queue on camera
+        empty_event_queue(self._cam)
+
+
         time.sleep(0.3)  # Necessary to let the time for the camera to save the image
 
         if self.capture_iso != self.preview_iso:
